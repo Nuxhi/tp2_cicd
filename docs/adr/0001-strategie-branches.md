@@ -1,5 +1,5 @@
 __Proposez une stratégie de gestion de vos branches (quelles branches ? qui ? comment) :__
-Branche main protégée, aucun push autorisé, requis une pull request pour merge, cette pull request doit être validé par 2 personnes membre de l'équipe dev. Les suppression push et force push sont restreintes. Cette règle permet de conserver une version de production sur le main qui est fonctionnelle en tout temps.  
+Branche main protégée, aucun push autorisé, requis une pull request pour merge, cette pull request doit être validé par 1 personnes membre de l'équipe dev. Les suppression push et force push sont restreintes. Cette règle permet de conserver une version de production sur le main qui est fonctionnelle en tout temps.  
 <br>
 
 __Expliquer comment un correctif urgent arrive en production avec votre stratégie, et comment il revient dans le travail en cours :__
