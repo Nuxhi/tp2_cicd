@@ -8,3 +8,6 @@ Grâce aux règles de versioning on peut avoir un suivi complet (voir T3), pour 
 
 __Indiquer à quel signal vous sauriez que ce choix ne fonctionne plus :__ 
 Quand des push sont envoyés sur main trop régulièrement, que les pull request cause des bugs et que la production tombe en panne.
+
+__Cririque :__
+La mise en pratique de notre stratégie de branche nous à montré un problème significatif. Lorsque l'on nomme nos commit x.x.x pour versionner nos changements, les messages de commits sont confus sur la branche main et dev. On a par exemple 1.4.0 et 1.1.0 avec 1.1.0 qui est commit après. Notre versionnage avec la version, devrait être effectuée uniquement lors des messages de commit pour les Pull Request. 
