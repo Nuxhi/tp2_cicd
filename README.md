@@ -46,7 +46,8 @@ curl -X POST http://localhost:8000/orders -H "Content-Type: application/json" -d
 
 ## Structure
 
-- `app/main.py` : routes FastAPI
-- `init.sql` : création des tables `products` et `orders` + données de test
+- `app/main.py` : toute l'API FastAPI, découpée en sections (modèles, santé, produits, stock, commandes)
+- `tests/` : tests automatiques (`python -m pytest`)
+- `init.sql` : création des tables, utilisateurs et 1 200 produits de test
 - `docker-compose.yml` : services `db` et `api`
 - `requirements.txt` : dépendances Python

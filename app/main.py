@@ -3,11 +3,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import psycopg
 
-from app.orders import place_order
-from app.stock import InsufficientStock
-
 app = FastAPI()
 DSN = os.environ["DATABASE_URL"]
+
+
+# ---------------------------------------------------------------------------
+# Modèles (formats des requêtes)
+# ---------------------------------------------------------------------------
 
 class OrderItem(BaseModel):
     product_id: int
@@ -21,10 +23,19 @@ class StockUpdate(BaseModel):
     user_id: int
     quantity: int
 
+
+# ---------------------------------------------------------------------------
+# Santé
+# ---------------------------------------------------------------------------
+
 @app.get("/health")
 def health():
     return {"status": "ok", "version": os.getenv("APP_VERSION", "dev")}
 
+
+# ---------------------------------------------------------------------------
+# Produits
+# ---------------------------------------------------------------------------
 
 @app.get("/products")
 def products():
@@ -33,6 +44,11 @@ def products():
             {"id": r[0], "name": r[1]}
             for r in c.execute("SELECT id, name FROM products")
         ]
+
+
+# ---------------------------------------------------------------------------
+# Stock des producteurs
+# ---------------------------------------------------------------------------
 
 @app.put("/products/{product_id}/stock")
 def update_stock(product_id: int, stock_update: StockUpdate):
@@ -86,11 +102,16 @@ def get_stock(product_id: int, user_id: int):
     return {"user_id": user_id, "product_id": product_id, "quantity": stock[0] if stock else 0}
 
 
+# ---------------------------------------------------------------------------
+# Commandes (règle : commande > stock -> refus)
+# ---------------------------------------------------------------------------
+
 @app.post("/orders", status_code=201)
 def create_order(o: Order):
     if not o.items:
         raise HTTPException(status_code=422, detail="La commande doit contenir au moins un produit")
 
+    # Un même produit peut apparaître sur plusieurs lignes : on additionne.
     items_by_product = {}
     for item in o.items:
         items_by_product[item.product_id] = (
@@ -98,7 +119,9 @@ def create_order(o: Order):
         )
 
     with psycopg.connect(DSN) as c:
+        # Si une erreur sort du bloc, tout est annulé (ni commande, ni stock modifié).
         with c.transaction():
+            # 1) Vérification du stock de chaque produit (ligne verrouillée).
             for product_id, quantity in items_by_product.items():
                 stock = c.execute(
                     """
@@ -125,11 +148,13 @@ def create_order(o: Order):
                         ),
                     )
 
+            # 2) Création de la commande.
             order = c.execute(
                 "INSERT INTO orders (user_id) VALUES (%s) RETURNING id",
                 (o.user_id,),
             ).fetchone()
 
+            # 3) Décrémentation du stock et enregistrement des lignes.
             for product_id, quantity in items_by_product.items():
                 c.execute(
                     """
