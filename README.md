@@ -33,18 +33,21 @@ docker compose up --build
 |---------|-------------|--------------------------------------|
 | GET     | `/health`   | Statut de l'API                      |
 | GET     | `/products` | Liste des produits                   |
-| POST    | `/orders`   | Crée une commande `{"product_id", "quantity"}` |
+| PUT     | `/products/{id}/stock` | Déclare le stock d'un produit (`{"user_id": 1, "quantity": 10}`) |
+| GET     | `/products/{id}/stock?user_id=1` | Consulte le stock d'un producteur |
+| POST    | `/orders`   | Crée une commande et décrémente le stock (`{"user_id": 1, "items": [{"product_id": 1, "quantity": 2}]}`) |
 
 Exemple :
 
 ```powershell
 curl http://localhost:8000/products
-curl -X POST http://localhost:8000/orders -H "Content-Type: application/json" -d "{\"product_id\":1,\"quantity\":2}"
+curl -X POST http://localhost:8000/orders -H "Content-Type: application/json" -d "{\"user_id\":1,\"items\":[{\"product_id\":1,\"quantity\":2}]}"
 ```
 
 ## Structure
 
-- `app/main.py` : routes FastAPI
-- `init.sql` : création des tables `products` et `orders` + données de test
+- `app/main.py` : toute l'API FastAPI, découpée en sections (modèles, santé, produits, stock, commandes)
+- `tests/` : tests automatiques (`python -m pytest`)
+- `init.sql` : création des tables, utilisateurs et 1 200 produits de test
 - `docker-compose.yml` : services `db` et `api`
 - `requirements.txt` : dépendances Python
