@@ -3,6 +3,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import psycopg
 
+from app.orders import place_order
+from app.stock import InsufficientStock
+
 app = FastAPI()
 DSN = os.environ["DATABASE_URL"]
 
@@ -21,6 +24,7 @@ class StockUpdate(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok", "version": os.getenv("APP_VERSION", "dev")}
+
 
 @app.get("/products")
 def products():
@@ -80,6 +84,7 @@ def get_stock(product_id: int, user_id: int):
         ).fetchone()
 
     return {"user_id": user_id, "product_id": product_id, "quantity": stock[0] if stock else 0}
+
 
 @app.post("/orders", status_code=201)
 def create_order(o: Order):
