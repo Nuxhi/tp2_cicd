@@ -1,0 +1,47 @@
+name: CD - publication de l'image sur GHCR
+
+# Publie l'image Docker sur GitHub Container Registry.
+# - push sur main            -> tag sha-<commit>
+# - push d'un tag vX.Y.Z      -> tags vX.Y.Z et sha-<commit>
+# Jamais de tag "latest" (traite R4 et R7 : savoir quelle version tourne).
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+  packages: write   # nécessaire pour pousser sur GHCR avec le GITHUB_TOKEN
+
+jobs:
+  publish:
+    name: Build et push GHCR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Connexion avec le GITHUB_TOKEN : aucun mot de passe à stocker (traite R1).
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Calcule les tags et met le nom de l'image en minuscules (obligatoire pour GHCR).
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: latest=false
+          tags: |
+            type=sha
+            type=semver,pattern=v{{version}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
